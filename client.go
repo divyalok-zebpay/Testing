@@ -89,7 +89,8 @@ func main() {
 		fmt.Printf("token generation failed with error: %s\n", err.Error())
 		return
 	}
-	// return
+	fmt.Printf("token: %v\n\n", token)
+	return
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"x-api-key":     "90b2e8bb-ea3c-4849-8fb0-a8072825c2e4",
