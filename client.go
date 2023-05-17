@@ -15,13 +15,17 @@ import (
 )
 
 type Request struct {
-	Name string
+	Name string `json:"name,omitempty"`
 }
 
-func getBodyHash(req interface{}) string {
-	data, _ := json.Marshal(req)
+func getBodyHash(body any) string {
+	var bytesBody []byte
+	bytesBody, ok := body.([]byte)
+	if !ok {
+		bytesBody, _ = json.Marshal(body)
+	}
 	hasher := sha256.New()
-	hasher.Write(data)
+	hasher.Write(bytesBody)
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
@@ -34,11 +38,47 @@ func getSecretKey() *[]byte {
 }
 
 func main() {
-	body := Request{}
-	uri := "/api/v1/balance"
+	body := []map[string]any{
+		{
+			"transaction_id": "c6911095-ba83-4aa1-b0fb-15934568a65a",
+			"destination":    1,
+			"amount":         100,
+			"from":           "c6911095-ba83-4aa1-b0fb-15934568a65a",
+		},
+		{
+			"transaction_id": "c6911095-ba83-4aa1-b0fb-15934568a65a",
+			"destination":    2,
+			"amount":         100,
+			"from":           "c6911095-ba83-4aa1-b0fb-15934568a65a",
+		},
+		{
+			"transaction_id": "c6911095-ba83-4aa1-b0fb-15934568a65c",
+			"destination":    1,
+			"amount":         100.234234,
+			"from":           "c6911095-ba83-4aa1-b0fb-15934568a65a",
+		},
+		{
+			"transaction_id": "c6911095-ba83-4aa1-b0fb-15934568a65d",
+			"destination":    2,
+			"amount":         100,
+			"from":           "c6911095-ba83-4aa1-b0fb-15934568a65a",
+		},
+		{
+			"transaction_id": "c6911095-ba83-4aa1-b0fb-15934568a65e",
+			"destination":    1,
+			"amount":         100,
+			"from":           "c6911095-ba83-4aa1-b0fb-15934568a65a",
+		},
+		{
+			"transaction_id": "c6911095-ba83-4aa1-b0fb-15934568a65f",
+			"destination":    1,
+			"amount":         100,
+			"from":           "c6911095-ba83-4aa1-b0fb-15934568a65a",
+		},
+	}
+	uri := "/api/v1/transactions"
 	url := fmt.Sprintf("http://localhost:8080%s", uri)
 	bod, _ := json.Marshal(body)
-	fmt.Printf("bod: %v\n\n", bod)
 	token_details := map[string]interface{}{
 		"bodyHash": getBodyHash(bod),
 		"uri":      uri,
@@ -49,20 +89,16 @@ func main() {
 		fmt.Printf("token generation failed with error: %s\n", err.Error())
 		return
 	}
+	// return
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"x-api-key":     "90b2e8bb-ea3c-4849-8fb0-a8072825c2e4",
 	}
-	pl, err := json.Marshal(body)
-	if err != nil {
-		fmt.Printf("error1: %s\n", err.Error())
-		return
-	}
 	status, res, err := external.HTTPCall(&external.HTTPCallParams{
 		Client:  httpclient.New(context.Background()),
-		Method:  external.HttpMethodGet,
+		Method:  external.HttpMethodPost,
 		URL:     url,
-		Payload: pl,
+		Payload: bod,
 		Headers: headers,
 	})
 	if err != nil {
